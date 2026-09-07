@@ -1,12 +1,55 @@
 const http = require("node:http");
+const { buffer } = require("node:stream/consumers");
 
 const localhost = "127.0.0.1";
 
 const PORT = 3000;
 
 const server = http.createServer((req , res) =>{
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end("Elite Engineer Here!! BOOOOOOOOOOYEAHHHHHHHH!!");
+    if(req.method === "GET"){
+        if(req.url === "/"){
+            res.writeHead(200 , {'Content-Type' : 'text/plain'});
+            res.end("Welcome to Elite Backend Dashbord! BOOOOOOOYEAHHHH!");
+        }
+        else if(req.url === "/profile"){
+            res.writeHead(200 , {'Content-Type' : 'text/plain'});
+            res.end("Welcome to Elite Backend Profile! BOOOOOOOYEAHHHH!")
+        }
+        else{
+            res.writeHead(404 , {'Content-Type' : 'text/plain'});
+            res.end("404 - Resource Not Found");   
+        }
+    }
+    else if(req.method === "POST"){
+        const chunks = [];
+        if(req.url === "/data"){
+            req.on('data' , (chunk) =>{
+                chunks.push(chunk);
+            })
+
+            req.on('end',() =>{
+                const body = Buffer.concat(chunks).toString();
+
+                res.writeHead(200 , {"Content-Type" : "text/plain"});
+                res.end(`Received your data : ${body}`); 
+                // why ${body}? what is body here?
+                // answer: ${body} is a string interpolation or template literal.
+                // and body is a variable that stores the data that is received from the client
+                // .on() method is used to listen for events
+                // 'data' event is emitted when the data is received from the client
+                // 'end' event is emitted when the data is finally received from the client
+
+            })
+        }
+        else{
+            res.writeHead(404 , {'Content-Type' : 'text/plain'});
+            res.end("404 - Resource Not Found");   
+        }
+    }
+    else{
+        res.writeHead(404 , {"Content-Type" : "text/plain"});
+        res.end("404 - Resource Not Found");
+    }
 });
 
 
@@ -49,6 +92,20 @@ const server = http.createServer((req , res) =>{
 // ECONNREFUSED	 |      Connection refused	          |      Trying to connect to a database/server that is offline    |
 // ETIMEDOUT	 |      Connection timed out	      |      Server took too long to respond                           |
 //=====================================================================================================================
+
+//  xyz.on('' , callbackfunction)
+//.on method takes in two parameters.
+// 1. first parameter : Event Name in string format
+// 2. second parameter : callback function (that runs when the event is emmited)
+//why is it used?
+// for example in above code for the POST req , we used .on('data' , callbackfunction) - it is just a method that catches events
+// and executes a callback function when that event is emmited
+// basically by writing this line of code we're saying
+// "Yo man, you just received a chunk of data , just catch it"
+// and when the data is finally received in whole we used .on('end' , )
+// we're saying "Yo man, the data is finally in your hands , now process it"
+// this event-driven architecture is the core of nodeJS
+
 server.on('error' , (error) =>{
     if(error.code === 'EADDRINUSE'){
         console.error(`Error : The ${PORT} is already in use , 
